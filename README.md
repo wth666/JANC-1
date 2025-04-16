@@ -28,6 +28,7 @@ For the details, please refer to our [paper](xxx).
 
 - [x] 2D solver for Euler equations  ✅
 - [x] conjuction with the CFD solver ✅
+- [x] Parallel compuation for the core solver ✅
 - [ ] 3D solver for Navier-Stocks equations (soon)
 - [ ] Implicit time advancing (soon)
 - [ ] Turbulence model
