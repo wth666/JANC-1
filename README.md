@@ -15,13 +15,24 @@ Authors:
 ## Physical models and numerical methods
 - Adaptive mesh refinenment (JAX-AMR)
 - Explicit time advancing (RK3)
-- High-order adaptive spatial reconstruction (WENO-5)
+- High-order spatial reconstruction (WENO-5)
 - Riemann solvers (Lax-Friedrichs)
 - Point-implicit chemical source advancing
 - CPU/GPU/TPU capability
 - Parallel computation on GPU/TPU (only for the core solver in current version)
 
 For the details, please refer to our [paper](xxx).
+
+## State of the Project
+
+- [x] 2D solver for Euler equations  ✅
+- [x] conjuction with the CFD solver ✅
+- [ ] 3D solver for Navier-Stocks equations (soon)
+- [ ] Implicit time advancing (soon)
+- [ ] Turbulence model
+- [ ] DPM model based on Euler-lagrange method
+- [ ] Mixing-precision computation
+- [ ] Parallel computation with JAX-AMR
 
 
 ## License
