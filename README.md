@@ -8,12 +8,13 @@ Authors:
 
 ## Basic features of JANC
 - Conjunction with JAX-AMR, allowing cost-effective large-scale simulations.
-- Adoption of structured Cartesian grid, high-order finite difference method, point-implicit chemical source advancing in the solver.
+- Adoption of structured Cartesian grid, dimensionless equations,  high-order finite difference method, point-implicit chemical source advancing in the solver.
 - Inheriting the basic features of JAX, including fully differentiable, compatible with CPUs/GPUs/TPUs computation, and convenient parallel management.
 - Programmed by Python, allowing rapid and efficient prototyping of projects.
 
 ## Physical models and numerical methods
 - Adaptive mesh refinenment (JAX-AMR)
+- Dimensionless computation
 - Explicit time advancing (RK3)
 - High-order spatial reconstruction (WENO-5)
 - Riemann solvers (Lax-Friedrichs)
