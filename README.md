@@ -7,7 +7,7 @@ Authors:
 - [Faxuan Luo](https://github.com/luofx23)
 
 ## Basic features of JANC
-- Implementation of adaptive mesh refinement (AMR) based on JAX, namely JAX-AMR, providing a feasible AMR framework for large-scale fully-differentiable computation.
+- Conjunction with JAX-AMR, allowing cost-effective large-scale simulations.
 - Adoption of structured Cartesian grid, high-order finite difference method, point-implicit chemical source advancing in the solver.
 - Inheriting the basic features of JAX, including fully differentiable, compatible with CPUs/GPUs/TPUs computation, and convenient parallel management.
 - Programmed by Python, allowing rapid and efficient prototyping of projects.
