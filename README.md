@@ -1,6 +1,6 @@
 # JANC: A cost-effective, differentiable compressible reacting flow solver featured with JAX-based adaptive mesh refinement
 
-JANC, as the abbreviation for “JAX-AMR & Combustion”, is a fully-differentiable compressible reacting flow solver based on [JAX-AMR](https://github.com/JA4S/JAX-AMR)
+JANC, as the abbreviation for “JAX-AMR & Combustion”, is a fully-differentiable compressible reacting flow solver based on [JAX-AMR](https://github.com/JA4S/JAX-AMR).
 
 Authors:
 - [Haocheng Wen](https://github.com/thuwen)
