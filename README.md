@@ -12,6 +12,9 @@ Authors:
 - Inheriting the basic features of JAX, including fully differentiable, compatible with CPUs/GPUs/TPUs computation, and convenient parallel management.
 - Programmed by Python, allowing rapid and efficient prototyping of projects.
 
+Rotating detonation combustor (RDC) simulation on 1,600,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 45 minutes:
+![image](https://github.com/JA4S/JANC/blob/main/RDC_Example.gif)
+
 ## Physical models and numerical methods
 - Adaptive mesh refinenment (JAX-AMR)
 - Dimensionless computation
