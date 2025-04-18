@@ -14,7 +14,8 @@ Authors:
 
 Rotating detonation combustor (RDC) simulation on 1,600,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 45 minutes:
 ![image](https://github.com/JA4S/JANC/blob/main/RDC_Example.gif)
-
+Detonation tube simulation on 4,000,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 1 hour
+![image](https://github.com/JA4S/JANC/blob/main/detonation_tube_example.gif)
 ## Physical models and numerical methods
 - Adaptive mesh refinenment (JAX-AMR)
 - Dimensionless computation
