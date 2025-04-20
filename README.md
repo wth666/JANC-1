@@ -30,7 +30,7 @@ For the details, please refer to our [paper](xxx).
 ## Example
 
 Rotating detonation combustor (RDC) simulation on 1,600,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 45 minutes on single A100 GPU:
-![image](https://github.com/JA4S/JANC/blob/main/RDC_example.gif)
+![image](https://github.com/JA4S/JANC/blob/main/docs/images/RDC_example.gif)
 Detonation tube simulation on 4,000,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 1 hour on single A100 GPU:
 ![image](https://github.com/JA4S/JANC/blob/main/detonation_tube_example.gif)
 
