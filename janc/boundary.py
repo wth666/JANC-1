@@ -1,3 +1,6 @@
+# Copyright © 2025 Haocheng Wen, Faxuan Luo
+# SPDX-License-Identifier: MIT
+
 usr_boundary_func = None
 #boundaryParams = {}
 
