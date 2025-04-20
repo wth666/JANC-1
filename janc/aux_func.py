@@ -1,3 +1,6 @@
+# Copyright © 2025 Haocheng Wen, Faxuan Luo
+# SPDX-License-Identifier: MIT
+
 import jax.numpy as jnp
 import janc.thermo as thermo
 
