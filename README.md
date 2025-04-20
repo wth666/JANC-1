@@ -28,6 +28,9 @@ Detonation tube simulation on 4,000,000 grids with 9sp-19r-H2-Air detailed react
 
 For the details, please refer to our [paper](xxx).
 
+## Quick Installation
+ The python files related to AMR should be cloned from [JAX-AMR](https://github.com/JA4S/JAX-AMR) repository, including jaxamr.py and amraux.py.
+
 ## State of the Project
 
 - [x] 2D solver for Euler equations  ✅
