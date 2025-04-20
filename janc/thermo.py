@@ -1,3 +1,5 @@
+# Copyright © 2025 Haocheng Wen, Faxuan Luo
+# SPDX-License-Identifier: MIT
 """
 The module extracts thermodynamic parameters 
 from Cantera’s database and employs dedicated functions 
