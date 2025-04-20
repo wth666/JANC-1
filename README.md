@@ -12,10 +12,6 @@ Authors:
 - Inheriting the basic features of JAX, including fully differentiable, compatible with CPUs/GPUs/TPUs computation, and convenient parallel management.
 - Programmed by Python, allowing rapid and efficient prototyping of projects.
 
-Rotating detonation combustor (RDC) simulation on 1,600,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 45 minutes:
-![image](https://github.com/JA4S/JANC/blob/main/RDC_example.gif)
-Detonation tube simulation on 4,000,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 1 hour
-![image](https://github.com/JA4S/JANC/blob/main/detonation_tube_example.gif)
 ## Physical models and numerical methods
 - Adaptive mesh refinenment (JAX-AMR)
 - Dimensionless computation
@@ -30,6 +26,13 @@ For the details, please refer to our [paper](xxx).
 
 ## Quick Installation
  The python files related to AMR should be cloned from [JAX-AMR](https://github.com/JA4S/JAX-AMR) repository, including jaxamr.py and amraux.py.
+
+## Example
+
+Rotating detonation combustor (RDC) simulation on 1,600,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 45 minutes:
+![image](https://github.com/JA4S/JANC/blob/main/RDC_example.gif)
+Detonation tube simulation on 4,000,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 1 hour
+![image](https://github.com/JA4S/JANC/blob/main/detonation_tube_example.gif)
 
 ## State of the Project
 
