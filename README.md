@@ -46,6 +46,18 @@ Detonation tube simulation on 4,000,000 grids with 9sp-19r-H2-Air detailed react
 - [ ] Mixing-precision computation
 - [ ] Parallel computation with JAX-AMR
 
+## Citation
+JANC: A cost-effective, differentiable compressible reacting flow solver featured with JAX-based adaptive mesh refinement
+```
+@article{Wen2025,
+   author = {Haocheng Wen and Faxuan Luo and Sheng Xu and Bing Wang},
+   doi = {xx},
+   journal = {arXiv preprint},
+   title = {JANC: A cost-effective, differentiable compressible reacting flow solver featured with JAX-based adaptive mesh refinement},
+   year = {2025}
+}
+```
+
 
 ## License
 This project is licensed under the MIT License - see 
