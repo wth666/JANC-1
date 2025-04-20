@@ -1,6 +1,6 @@
 description: |-
-  Simplified H2-Air Mechanism for Rotating Detonation
-  Reference: Adapted from Hayashi et al: Numerical simulation of pulsed jet plume combustion
+  H2-Air Mechanism for Detonation
+  Reference: Adapted from Jachimowski et al: An analytical study of the hydrogen-air reaction mechanism with application to scramjet combustion
   Units: cm, g, s, cal, mol, K
   Reaction
     Preexoonential A; Temperature exponent B; Activation energy Ea
