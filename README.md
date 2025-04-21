@@ -22,7 +22,7 @@ Authors:
 - CPU/GPU/TPU capability
 - Parallel computation on GPU/TPU (only for the core solver in current version)
 
-For the details, please refer to our [paper](xxx).
+For the details, please refer to our [paper](https://doi.org/10.48550/arXiv.2504.13750).
 
 ## Quick Installation
  The python files related to AMR should be cloned from [JAX-AMR](https://github.com/JA4S/JAX-AMR) repository, including jaxamr.py and amraux.py.
@@ -51,7 +51,7 @@ JANC: A cost-effective, differentiable compressible reacting flow solver feature
 ```
 @article{Wen2025,
    author = {Haocheng Wen and Faxuan Luo and Sheng Xu and Bing Wang},
-   doi = {xx},
+   doi = {10.48550/arXiv.2504.13750},
    journal = {arXiv preprint},
    title = {JANC: A cost-effective, differentiable compressible reacting flow solver featured with JAX-based adaptive mesh refinement},
    year = {2025}
