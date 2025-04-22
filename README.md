@@ -26,9 +26,9 @@ For the details, please refer to our [paper](https://doi.org/10.48550/arXiv.2504
 
 ## Quick Installation
 JANC CFD solver and JAX-AMR amr capabilities can be easily installed using pip install git:
-'''
+```
 pip install git+https://github.com/JA4S/JANC.git
-'''
+```
 
 ## Example
 
