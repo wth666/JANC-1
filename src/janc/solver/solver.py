@@ -8,7 +8,6 @@ from ..boundary import boundary
 from ..parallel import boundary as parallel_boundary
 from functools import partial
 
-from ..preprocess.config import template_node_num
 from jaxamr import amr
 
 def set_solver(thermo_set,boundary_set,source_set = None, solver_mode='base'):
@@ -52,7 +51,7 @@ def set_solver(thermo_set,boundary_set,source_set = None, solver_mode='base'):
     if solver_mode == 'amr':
         def advance_flux(level, blk_data, dx, dy, dt, ref_blk_data, ref_blk_info, theta=None):
 
-            num = template_node_num
+            num = 3
 
             ghost_blk_data = amr.get_ghost_block_data(ref_blk_data, ref_blk_info)
             U,aux = ghost_blk_data[:,0:-2],ghost_blk_data[:,-2:]
