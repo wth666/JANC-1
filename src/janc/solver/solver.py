@@ -8,23 +8,25 @@ from ..boundary import boundary
 from ..parallel import boundary as parallel_boundary
 from functools import partial
 
+
 from jaxamr import amr
 
-def set_solver(thermo_set,boundary_set,source_set = None, solver_mode='base'):
-    thermo.set_thermo(thermo_set)
+def CFL(field,dx,dy,cfl=0.20):
+    U, aux = field[0:-2],field[-2:]
+    _,u,v,_,_,a = aux_func.U_to_prim(U,aux)
+    cx = jnp.max(abs(u) + a)
+    cy = jnp.max(abs(v) + a)
+    dt = jnp.minimum(cfl*dx/cx,cfl*dy/cy)
+    return dt
+
+def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, solver_mode='base'):
+    thermo.set_thermo(thermo_set,nondim_set)
     boundary.set_boundary(boundary_set)
     aux_func.set_source_terms(source_set)
     if thermo.thermo_settings['is_detailed_chemistry']:
         chem_solver_type = 'implicit'
     else:
         chem_solver_type = 'explicit'
-    
-    def CFL(field,dx,cfl=0.20):
-        U, aux = field[0:-2],field[-2:]
-        _,u,_,_,_,a = aux_func.U_to_prim(U,aux)
-        c = jnp.max(jnp.abs(u) + a)
-        dt = cfl/c*dx
-        return dt
     
     if solver_mode == 'amr':
         
