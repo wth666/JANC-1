@@ -4,14 +4,11 @@ from ..preprocess import nondim
 #import os
 
 Rg = 8.314463
-rho0 = nondim.rho0
-P0 = nondim.P0
-M0 = nondim.M0
-e0 = nondim.e0
-T0 = nondim.T0
-t0 = nondim.t0
 
-def read_reaction_mechanism(file_path:str):
+def read_reaction_mechanism(file_path,nondim_config=None):
+    
+    nondim.set_nondim(nondim_config)
+    
     # 读取文件
     gas = ct.Solution(file_path)
     
@@ -54,9 +51,9 @@ def read_reaction_mechanism(file_path:str):
     Ea = jnp.array(Ea)
 
     #无量纲化
-    A = (t0/rho0)*(T0**B)*((rho0/M0)**vf_sum)*M0*A
-    EaOverRu = Ea/(e0*M0)
-    third_body_coeffs = third_body_coeffs*(rho0/M0)
+    A = (nondim.t0/nondim.rho0)*(nondim.T0**B)*((nondim.rho0/nondim.M0)**vf_sum)*nondim.M0*A
+    EaOverRu = Ea/(nondim.e0*nondim.M0)
+    third_body_coeffs = third_body_coeffs*(nondim.rho0/nondim.M0)
 
     #形状填充
     third_body_coeffs = jnp.expand_dims(third_body_coeffs,(2,3))
@@ -79,7 +76,8 @@ def read_reaction_mechanism(file_path:str):
     return ReactionParams
 
 
-def get_cantera_coeffs(species_list,mech='gri30.yaml'):
+def get_cantera_coeffs(species_list,mech='gri30.yaml',nondim_config=None):
+    nondim.set_nondim(nondim_config)
     gas = ct.Solution(mech)
     species_M = []
     Tcr = []
@@ -93,12 +91,12 @@ def get_cantera_coeffs(species_list,mech='gri30.yaml'):
         coeffs_high.append(nasa_poly.coeffs[1:8])
         species_M.append(sp.molecular_weight)
     
-    coeffs_low = jnp.array(coeffs_low)*jnp.array([[1,T0,T0**2,T0**3,T0**4,1/T0,1]])
-    coeffs_high = jnp.array(coeffs_high)*jnp.array([[1,T0,T0**2,T0**3,T0**4,1/T0,1]])
-    species_M = jnp.array(species_M)/(1000*M0)
+    coeffs_low = jnp.array(coeffs_low)*jnp.array([[1,nondim.T0,nondim.T0**2,nondim.T0**3,nondim.T0**4,1/nondim.T0,1]])
+    coeffs_high = jnp.array(coeffs_high)*jnp.array([[1,nondim.T0,nondim.T0**2,nondim.T0**3,nondim.T0**4,1/nondim.T0,1]])
+    species_M = jnp.array(species_M)/(1000*nondim.M0)
     Mex = jnp.expand_dims(species_M,(1,2))
     
-    Tcr = jnp.array(Tcr)/T0
+    Tcr = jnp.array(Tcr)/nondim.T0
     
     cp_cof_low = jnp.flip(coeffs_low[:,0:5],axis=1)/species_M[:,None]
     cp_cof_high = jnp.flip(coeffs_high[:,0:5],axis=1)/species_M[:,None]
