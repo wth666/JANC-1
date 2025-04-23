@@ -8,7 +8,7 @@ dependencies: jax & cantera(python version)
 """
 
 import jax.numpy as jnp
-from jax import vmap,lax#,custom_vjp 
+from jax import vmap,lax,custom_vjp 
 from ..preprocess import nondim
 from ..preprocess.load import read_reaction_mechanism, get_cantera_coeffs
 import os
@@ -136,7 +136,7 @@ def e_eqn(T, e, Y):
     ddres_dT2 = dcp
     return res, dres_dT, ddres_dT2, gamma
 
-#@custom_vjp
+@custom_vjp
 def get_T_nasa7(e,Y,initial_T):
     
     initial_res, initial_de_dT, initial_d2e_dT2, initial_gamma = e_eqn(initial_T,e,Y)
@@ -154,25 +154,44 @@ def get_T_nasa7(e,Y,initial_T):
 
     initial_state = (initial_res, initial_de_dT, initial_d2e_dT2, initial_T, initial_gamma, 0)
     _, _, _, T_final, gamma_final, it = lax.while_loop(cond_fun, body_fun, initial_state)
-    return T_final, gamma_final
+    return jnp.concatenate([gamma_final, T_final],axis=0)
     
-    #def get_T_fwd(e,Y,initial_T):
-    #    T_final, gamma_final = get_T(e,Y,initial_T)
-    #    return (T_final, gamma_final), (T_final,e, Y)
+def get_T_fwd(e,Y,initial_T):
+    aux_new = get_T_nasa7(e,Y,initial_T)
+    return aux_new, (e,Y,aux_new)
     
-    #def get_T_bwd(res, g):
-    #    T_final, e, Y = res
-    #    cp, gamma, h, R, dcp = get_thermo(T_final,Y)
-    #    cv = cp - R
-    #    dTde = 1/cv
+def get_T_bwd(res, g):
+    e, Y, aux_new = res
+    T = aux_new[1:2]
+    cp, _, h, R, dcp_dT = get_thermo(T,Y)
+    cv = cp - R
+    dcv_dT = dcp_dT
+    dT_de = 1/cv
     
-    #    _, _, h_i = get_thermo_properties(T_final[0])
-    #    e_i = h_i - 1/Mex*T_final
-    #    dTdY = -e_i/cv
-        
-    #    return (g * dTde, g * dTdY, jnp.zeros_like(T_final))
+    dgamma_dT = (dcp_dT*cv-dcv_dT*cp)/(cv**2)
+    dgamma_de = dgamma_dT*dT_de
     
-    #get_T.defvjp(get_T_fwd, get_T_bwd)
+    cp_i, dcp_i_dT, h_i = get_thermo_properties(T[0])
+    e_i = h_i - 1/Mex*T
+    dT_dY = (-e_i[0:-1]+e_i[-1:])/cv
+    
+    dR_dY = 1/Mex[0:-1]-1/Mex[-1:]
+    dcp_dY = cp_i[0:-1]-cp_i[-1:]
+    dcv_dY = dcp_dY - dR_dY
+    
+    dgamma_dY = (dcp_dY*cv-dcv_dY*cp)/(cv**2)
+    dgamma_dY = dgamma_dT*dT_dY + dgamma_dY
+    
+    dL_dgamma = g[0:1]
+    dL_dT = g[1:2]
+    
+    dL_de = dL_dgamma*dgamma_de + dL_dT*dT_de
+    dL_dY = dL_dgamma*dgamma_dY + dL_dT*dT_dY
+    
+    
+    return (dL_de, dL_dY, jnp.zeros_like(T))
+    
+get_T_nasa7.defvjp(get_T_fwd, get_T_bwd)
 
 def get_thermo_constant_gamma(T, Y):
     R = get_R(Y)
@@ -189,7 +208,7 @@ def get_T_constant_gamma(e,Y,initial_T=None):
     R = get_R(Y)
     T_final = e/(R/(gamma-1))
     gamma_final = jnp.full_like(e,gamma)
-    return T_final, gamma_final
+    return jnp.concatenate([gamma_final, T_final],axis=0)
 
 get_thermo_func_dict = {'nasa7':get_thermo_nasa7,
                         'constant_gamma':get_thermo_constant_gamma}
