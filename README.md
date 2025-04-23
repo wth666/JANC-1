@@ -32,11 +32,16 @@ pip install git+https://github.com/JA4S/JANC.git
 
 ## Example
 
-Rotating detonation combustor (RDC) simulation on 1,600,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 45 minutes on single A100 GPU:
+Rotating detonation combustor (RDC) simulation on 1,600,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 45 minutes on single A100 GPU.
+
 Open [janc_basic_example1.ipynb](https://github.com/JA4S/JANC/blob/main/examples/janc_basic_example1.ipynb) in Google Colab to run the example.
+
 ![image](https://github.com/JA4S/JANC/blob/main/docs/images/RDC_example.gif)
-Detonation tube simulation on 4,000,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 1 hour on single A100 GPU:
+
+Detonation tube simulation on 4,000,000 grids with 9sp-19r-H2-Air detailed reaction achieved within 1 hour on single A100 GPU.
+
 Open [janc_basic_example2.ipynb](https://github.com/JA4S/JANC/blob/main/examples/janc_basic_example2.ipynb) in Google Colab to run the example.
+
 ![image](https://github.com/JA4S/JANC/blob/main/docs/images/detonation_tube_example.gif)
 
 ## State of the Project
