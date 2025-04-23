@@ -13,7 +13,6 @@ from ..preprocess import nondim
 from ..thermodynamics import thermo
 
 Rg = 8.314463
-P0 = nondim.P0
 
 
 def reactionConstant_i(T, X, i, k, n):
@@ -41,7 +40,7 @@ def reactionConstant_i(T, X, i, k, n):
     #kb = lax.cond(cond,
                   #lambda:kf_i/(jnp.exp(jnp.sum((vb_i-vf_i)*(get_gibbs(T[0,:,:])),axis=0,keepdims=True))*((101325/P0/T)**vsum))*jnp.exp(jnp.sum(vb_i*log_X,axis=0,keepdims=True)),
                   #lambda:jnp.zeros_like(kf))
-    kb = kf_i/(jnp.exp(jnp.sum((vb_i-vf_i)*(thermo.get_gibbs(T[0,:,:])),axis=0,keepdims=True))*((101325/P0/T)**vsum))*jnp.exp(jnp.sum(vb_i*log_X,axis=0,keepdims=True))
+    kb = kf_i/(jnp.exp(jnp.sum((vb_i-vf_i)*(thermo.get_gibbs(T[0,:,:])),axis=0,keepdims=True))*((101325/nondim.P0/T)**vsum))*jnp.exp(jnp.sum(vb_i*log_X,axis=0,keepdims=True))
     
     w_kOverM_i = (vb_ik-vf_ik)*aij_X_sum*(kf-kb)
     vb_in = vb_i[n]
