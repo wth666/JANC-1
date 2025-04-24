@@ -30,7 +30,7 @@ def update_aux(U,aux):
     Y = U[4:,:,:]/rho
     initial_T = aux[1:2]
     T,gamma = thermo.get_T(e,Y,initial_T)
-    return aux.at[0:2].set(jnp.concatenate([gamma,T],axis=0))
+    return aux.at[0:2].set(jnp.stack([gamma,T],axis=0))
 
 def source_terms(U,aux,theta=None):
     return user_source(U,aux,theta)
