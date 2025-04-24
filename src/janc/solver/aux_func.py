@@ -21,7 +21,6 @@ def set_source_terms(user_set):
         else:
             user_source = zero_source_terms
         
-
 def update_aux(U,aux):
     rho = U[0:1,:,:]
     u = U[1:2,:,:]/rho
@@ -29,8 +28,10 @@ def update_aux(U,aux):
     e = U[3:4,:,:]/rho - 0.5*(u**2+v**2)
     Y = U[4:,:,:]/rho
     initial_T = aux[1:2]
-    T,gamma = thermo.get_T(e,Y,initial_T)
-    return aux.at[0:2].set(jnp.stack([gamma,T],axis=0))
+    aux_new = thermo.get_T(e,Y,initial_T)
+    return aux.at[0:2].set(aux_new)
+
+
 
 def source_terms(U,aux,theta=None):
     return user_source(U,aux,theta)
