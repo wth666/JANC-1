@@ -26,20 +26,16 @@ def reactionConstant_i(T, X, i, k, n):
     vb_ik = vb_i[k,:,:]
     vsum = thermo.ReactionParams["vsum"][i]
     aij = thermo.ReactionParams["third_body_coeffs"][i,:,:,:]
+    is_third_body = thermo.ReactionParams['is_third_body'][i]
 
 
     kf_i = A*jnp.power(T,B)*jnp.exp(-EakOverRu/T)
-    X = jnp.maximum(X,1e-20*jnp.ones_like(X))
     aij_X_sum = jnp.sum(aij*X,axis=0,keepdims=True)
-    aij_X_sum = jnp.maximum(aij_X_sum, jnp.ones_like(aij_X_sum))
+    aij_X_sum = is_third_body*aij_X_sum + (1-is_third_body)
+    X = jnp.clip(X,min=1e-50)
     X = X[0:thermo.n,:,:]
     log_X = jnp.log(X)
     kf = kf_i*jnp.exp(jnp.sum(vf_i*log_X,axis=0,keepdims=True))
-    
-    #cond = ReactionParams["is_reverse"][i]
-    #kb = lax.cond(cond,
-                  #lambda:kf_i/(jnp.exp(jnp.sum((vb_i-vf_i)*(get_gibbs(T[0,:,:])),axis=0,keepdims=True))*((101325/P0/T)**vsum))*jnp.exp(jnp.sum(vb_i*log_X,axis=0,keepdims=True)),
-                  #lambda:jnp.zeros_like(kf))
     kb = kf_i/(jnp.exp(jnp.sum((vb_i-vf_i)*(thermo.get_gibbs(T[0,:,:])),axis=0,keepdims=True))*((101325/nondim.P0/T)**vsum))*jnp.exp(jnp.sum(vb_i*log_X,axis=0,keepdims=True))
     
     w_kOverM_i = (vb_ik-vf_ik)*aij_X_sum*(kf-kb)
@@ -78,7 +74,10 @@ def solve_implicit_rate(T,rho,Y,dt):
     rhoY = rho*Y
     X = rhoY/(thermo.Mex)
     A, b = construct_matrix_equation(T,X,dt)
-    dU = jnp.linalg.solve(A,b)
-    return jnp.transpose(dU[:,:,:,0],(2,0,1))
+    drhoY = jnp.linalg.solve(A,b)
+    drhoY = jnp.transpose(drhoY[:,:,:,0],(2,0,1))
+    dY = drhoY/rho
+    dY = jnp.clip(dY,min=-Y[0:-1],max=1-Y[0:-1])
+    return rho*dY
 
 
