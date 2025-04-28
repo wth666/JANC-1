@@ -34,6 +34,7 @@ def read_reaction_mechanism(file_path,nondim_config=None):
     B = []
     Ea = []
     third_body_coeffs = jnp.zeros((n_reactions, n_species))
+    is_third_body = jnp.zeros((n_reactions,))
     # 填充矩阵
     for i, reaction in enumerate(gas.reactions()):
         reaction_order = sum(reaction.reactants.values())
@@ -42,6 +43,7 @@ def read_reaction_mechanism(file_path,nondim_config=None):
             reaction_order += 1
             for j, species in enumerate(species_list):
                 third_body_coeffs = third_body_coeffs.at[i, j].set(efficiencies.get(species, 1.0))  # 默认值 1.0
+        is_third_body = is_third_body.at[i].set(jnp.any(third_body_coeffs[i,:]>0)*1)
         A.append(reaction.rate.pre_exponential_factor*((1e-3)**(reaction_order-1)))
         B.append(reaction.rate.temperature_exponent)
         Ea.append((reaction.rate.activation_energy)/1000)
@@ -67,6 +69,7 @@ def read_reaction_mechanism(file_path,nondim_config=None):
         'A': A,
         'B': B,
         'Ea/Ru': EaOverRu,
+        'is_third_body':is_third_body,
         'third_body_coeffs': third_body_coeffs,
         "num_of_reactions": n_reactions,
         "num_of_species": n_species,
