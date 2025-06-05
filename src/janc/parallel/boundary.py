@@ -4,8 +4,8 @@ from .boundary_padding import pad
 from ..boundary import boundary
 
 ##parallel settings##
-num_devices = jax.local_device_count()
 devices = jax.devices()
+num_devices = len(devices)
 
 boundary_func = boundary.boundary_func
 
