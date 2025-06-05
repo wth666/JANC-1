@@ -43,11 +43,9 @@ def reactionConstant_i(T, X, i, k, n):
     vb_in = vb_i[n]
     vf_in = vf_i[n]
     ain = thermo.ReactionParams["third_body_coeffs"][i,n]
-    ai_last = thermo.ReactionParams["third_body_coeffs"][i,-1]
     Mn = thermo.species_M[n]
-    M_last = thermo.species_M[-1]
     Xn = jnp.expand_dims(X[n,:,:],0)
-    dwk_drhonYn_OverMk_i = (vb_ik-vf_ik)*(kf-kb)*((ain/Mn)-(ai_last/M_last)) + 1/(Mn*Xn)*(vb_ik-vf_ik)*aij_X_sum*(vf_in*kf-vb_in*kb)
+    dwk_drhonYn_OverMk_i = (vb_ik-vf_ik)*(kf-kb)*(ain/Mn) + 1/(Mn*Xn)*(vb_ik-vf_ik)*aij_X_sum*(vf_in*kf-vb_in*kb)
 
     return w_kOverM_i, dwk_drhonYn_OverMk_i
 
