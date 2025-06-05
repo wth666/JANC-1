@@ -164,25 +164,3 @@ def weno5(U,aux,dx,dy):
     netflux = dF/dx + dG/dy
 
     return -netflux
-
-@jit
-def weno5_amr(field,dx,dy):
-    
-    U,aux_old = field[0:-2],field[-2:]
-    aux = aux_func.update_aux(U,aux_old)
-    
-    Fplus, Fminus = splitFlux_LF(1, U, aux)
-    Gplus, Gminus = splitFlux_LF(2, U, aux)
-
-    dFp = WENO_plus_x(Fplus)
-    dFm = WENO_minus_x(Fminus)
-
-    dGp = WENO_plus_y(Gplus)
-    dGm = WENO_minus_y(Gminus)
-
-    dF = dFp + dFm
-    dG = dGp + dGm
-
-    netflux = dF/dx + dG/dy
-
-    return -netflux
