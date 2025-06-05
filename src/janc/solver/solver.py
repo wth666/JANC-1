@@ -129,9 +129,10 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
 
     if is_parallel:
         blk_info_pmap_axis = {'number': 0,
-                                      'index': 0,
-                                      'glob_index': 0,
-                                      'neighbor_index': 0}
+                              'index': 0,
+                              'glob_index': 0,
+                              'neighbor_index': 0
+                             }
         if parallel_set is not None:
             assert 'theta_pmap_axis' in parallel_set, "You should define the pmap axes of theta in your setting dict with key 'theta_pmap_axis'."
             theta_pmap_axis = parallel_set['theta_pmap_axis']
