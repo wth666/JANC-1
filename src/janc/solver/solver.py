@@ -128,16 +128,20 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
                 return field
 
     if is_parallel:
+        blk_info_pmap_axis = {'number': 0,
+                                      'index': 0,
+                                      'glob_index': 0,
+                                      'neighbor_index': 0}
         if parallel_set is not None:
             assert 'theta_pmap_axis' in parallel_set, "You should define the pmap axes of theta in your setting dict with key 'theta_pmap_axis'."
             theta_pmap_axis = parallel_set['theta_pmap_axis']
             if solver_mode == 'amr':
-                advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(None,0,None,None,None,0,0,theta_pmap_axis),static_broadcasted_argnums=0)
+                advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(None,0,None,None,None,0,blk_info_pmap_axis,theta_pmap_axis),static_broadcasted_argnums=0)
             else:
                 advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(0,None,None,None,theta_pmap_axis))
         else:
             if solver_mode == 'amr':
-                advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(None,0,None,None,None,0,0),static_broadcasted_argnums=0)
+                advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(None,0,None,None,None,0,blk_info_pmap_axis),static_broadcasted_argnums=0)
             else:
                 advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(0,None,None,None))
         
