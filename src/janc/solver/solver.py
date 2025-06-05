@@ -19,7 +19,7 @@ def CFL(field,dx,dy,cfl=0.20):
     dt = jnp.minimum(cfl*dx/cx,cfl*dy/cy)
     return dt
 
-def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, solver_mode='base'):
+def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, solver_mode='base',is_parallel=False,parallel_set=None):
     thermo.set_thermo(thermo_set,nondim_set)
     boundary.set_boundary(boundary_set)
     aux_func.set_source_terms(source_set)
@@ -27,6 +27,11 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
         chem_solver_type = 'implicit'
     else:
         chem_solver_type = 'explicit'
+
+    if is_parallel:
+        boundary_conditions = parallel_boundary.boundary_conditions
+    else:
+        boundary_conditions = boundary.boundary_conditions
     
     if solver_mode == 'amr':
         
@@ -36,20 +41,14 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
             physical_rhs = weno5(U,aux,dx,dy) + aux_func.source_terms(U[:,3:-3,3:-3], aux[:,3:-3,3:-3], theta)
             return jnp.pad(physical_rhs,pad_width=((0,0),(3,3),(3,3)))
     
+
     else:
-        if solver_mode == 'parallel':
-            def rhs(U,aux,dx,dy,theta=None):
-                aux = aux_func.update_aux(U, aux)
-                U_with_ghost,aux_with_ghost = parallel_boundary.boundary_conditions(U,aux,theta)
-                physical_rhs = weno5(U_with_ghost,aux_with_ghost,dx,dy) + aux_func.source_terms(U, aux, theta)
-                return physical_rhs
-        else:
-            def rhs(U,aux,dx,dy,theta=None):
-                aux = aux_func.update_aux(U, aux)
-                U_with_ghost,aux_with_ghost = boundary.boundary_conditions(U,aux,theta)
-                physical_rhs = weno5(U_with_ghost,aux_with_ghost,dx,dy) + aux_func.source_terms(U, aux, theta)
-                return physical_rhs
-    
+        def rhs(U,aux,dx,dy,theta=None):
+            aux = aux_func.update_aux(U, aux)
+            U_with_ghost,aux_with_ghost = boundary_conditions(U,aux,theta)
+            physical_rhs = weno5(U_with_ghost,aux_with_ghost,dx,dy) + aux_func.source_terms(U, aux, theta)
+            return physical_rhs
+
     if solver_mode == 'amr':
         def advance_flux(level, blk_data, dx, dy, dt, ref_blk_data, ref_blk_info, theta=None):
 
@@ -108,21 +107,13 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
                 field_adv = advance_flux(level, blk_data, dx, dy, dt, ref_blk_data, ref_blk_info,theta)
                 field = vmap(advance_source_term,in_axes=(0, None))(field_adv,dt)
                 return field
-        
         else:
-            if solver_mode == 'parallel':
-                @partial(pmap,axis_name='x')    
-                @jit    
-                def advance_one_step(field,dx,dy,dt,theta=None):
-                    field_adv = advance_flux(field,dx,dy,dt,theta)
-                    field = advance_source_term(field_adv,dt)
-                    return field
-            else:
-                @jit    
-                def advance_one_step(field,dx,dy,dt,theta=None):
-                    field_adv = advance_flux(field,dx,dy,dt,theta)
-                    field = advance_source_term(field_adv,dt)
-                    return field
+            @jit    
+            def advance_one_step(field,dx,dy,dt,theta=None):
+                field_adv = advance_flux(field,dx,dy,dt,theta)
+                field = advance_source_term(field_adv,dt)
+                return field
+
     else:
         if solver_mode == 'amr':
             @partial(jit,static_argnames='level')
@@ -131,20 +122,24 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
                 return field
         
         else:
-            if solver_mode == 'parallel':
-                @partial(pmap,axis_name='x')    
-                @jit    
-                def advance_one_step(field,dx,dy,dt,theta=None):
-                    field = advance_flux(field,dx,dy,dt,theta)
-                    return field
-            else:
-                @jit    
-                def advance_one_step(field,dx,dy,dt,theta=None):
-                    field = advance_flux(field,dx,dy,dt,theta)
-                    return field
-    
+            @jit    
+            def advance_one_step(field,dx,dy,dt,theta=None):
+                field = advance_flux(field,dx,dy,dt,theta)
+                return field
+
+    if is_parallel:
+        if parallel_set is not None:
+            assert 'theta_pmap_axis' in parallel_set, "You should define the pmap axes of theta in your setting dict with key 'theta_pmap_axis'."
+            theta_pmap_axis = parallel_set['theta_pmap_axis']
+        else:
+            theta_pmap_axis = None
+            
+        if solver_mode == 'amr':
+            advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(None,0,None,None,None,0,0,theta_pmap_axis),static_broadcasted_argnums=0)
+        else:
+            advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(0,None,None,None,theta_pmap_axis))
+        
     print('solver is initialized successfully!')
-    
     return advance_one_step,rhs
         
 
