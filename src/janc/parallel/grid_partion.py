@@ -12,6 +12,19 @@ def split_and_distribute_grid(grid,split_axis=1):
     sharded_grid = jax.device_put_sharded(shards, devices)
     return sharded_grid
 
+def gather_grid(sharded_grid,gather_axis=1):
+    return jnp.concatenate(sharded_grid,axis=gather_axis)
+
+def split_and_distribute_block(blk_data,split_axis=0):
+    n_blk = jnp.size(blk_data,axis=split_axis)
+    assert n_blk % num_devices == 0, "number of blocks should be divisible by number of avaliable devices"
+    shards = jnp.split(blk_data,num_devices,axis=split_axis)
+    sharded_block = jax.device_put_sharded(shards, devices)
+    return sharded_block
+
+def gather_block(sharded_block,gather_axis=0):
+    return jnp.concatenate(sharded_block,axis=gather_axis)
+
 def split_and_distribute_blk_info(blk_info):
     number = blk_info['number']
     index = blk_info['index']
@@ -33,3 +46,22 @@ def split_and_distribute_blk_info(blk_info):
                         'glob_index': sharded_glob_index,
                         'neighbor_index': sharded_neighbor_index}
     return sharded_blk_info
+    
+def gather_blk_info(sharded_blk_info):
+    number = sharded_blk_info['number']
+    index = sharded_blk_info['index']
+    glob_index = sharded_blk_info['glob_index']
+    neighbor_index = sharded_blk_info['neighbor_index']
+
+    number = jnp.concatenate(number,axis=0)
+    index = jnp.concatenate(index,axis=0)
+    glob_index = jnp.concatenate(glob_index,axis=0)
+    neighbor_index = jnp.concatenate(neighbor_index,axis=0)
+
+    blk_info = {'number': number,
+                'index': index,
+                'glob_index': glob_index,
+                'neighbor_index': neighbor_index}
+    return  blk_info
+
+
