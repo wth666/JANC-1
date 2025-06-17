@@ -6,6 +6,7 @@ from ..thermodynamics import thermo
 from ..thermodynamics import chemical
 from ..boundary import boundary
 from ..parallel import boundary as parallel_boundary
+from ..parallel import grid_partion
 from functools import partial
 
 
@@ -137,12 +138,24 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
             assert 'theta_pmap_axis' in parallel_set, "You should define the pmap axes of theta in your setting dict with key 'theta_pmap_axis'."
             theta_pmap_axis = parallel_set['theta_pmap_axis']
             if solver_mode == 'amr':
-                advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(None,0,None,None,None,0,blk_info_pmap_axis,theta_pmap_axis),static_broadcasted_argnums=0)
+                advance_one_step_pmap = pmap(advance_one_step,axis_name='x',in_axes=(None,None,None,None,None,0,blk_info_pmap_axis,theta_pmap_axis),static_broadcasted_argnums=0)
+                def advance_one_step(level, blk_data, dx, dy, dt, ref_blk_data, ref_blk_info,theta=None):
+                    split_ref_blk_data = grid_partion.split_and_distribute_block(ref_blk_data)
+                    split_ref_blk_info = grid_partion.split_and_distribute_blk_info(ref_blk_info)
+                    splitted_blk_data = advance_one_step_pmap(level, blk_data, dx, dy, dt, split_ref_blk_data, split_ref_blk_info,theta)
+                    blk_data = grid_partion.gather_block(splitted_blk_data)
+                    return blk_data
             else:
                 advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(0,None,None,None,theta_pmap_axis))
         else:
             if solver_mode == 'amr':
-                advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(None,0,None,None,None,0,blk_info_pmap_axis),static_broadcasted_argnums=0)
+                advance_one_step_pmap = pmap(advance_one_step,axis_name='x',in_axes=(None,None,None,None,None,0,blk_info_pmap_axis),static_broadcasted_argnums=0)
+                def advance_one_step(level, blk_data, dx, dy, dt, ref_blk_data, ref_blk_info,theta=None):
+                    split_ref_blk_data = grid_partion.split_and_distribute_block(ref_blk_data)
+                    split_ref_blk_info = grid_partion.split_and_distribute_blk_info(ref_blk_info)
+                    splitted_blk_data = advance_one_step_pmap(level, blk_data, dx, dy, dt, split_ref_blk_data, split_ref_blk_info)
+                    blk_data = grid_partion.gather_block(splitted_blk_data)
+                    return blk_data
             else:
                 advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(0,None,None,None))
         
