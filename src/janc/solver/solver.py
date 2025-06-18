@@ -41,6 +41,14 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
             aux = aux_func.update_aux(U, aux)
             physical_rhs = weno5(U,aux,dx,dy) + aux_func.source_terms(U[:,3:-3,3:-3], aux[:,3:-3,3:-3], theta)
             return jnp.pad(physical_rhs,pad_width=((0,0),(3,3),(3,3)))
+
+        if is_parallel:
+            @partial(pmap,axis_name='x',in_axes=(0, 0, None, None, None))
+            @partial(vmap,in_axes=(0, 0, None, None, None))
+            def rhs(U, aux, dx, dy, theta=None):
+                aux = aux_func.update_aux(U, aux)
+                physical_rhs = weno5(U,aux,dx,dy) + aux_func.source_terms(U[:,3:-3,3:-3], aux[:,3:-3,3:-3], theta)
+                return jnp.pad(physical_rhs,pad_width=((0,0),(3,3),(3,3)))
     
 
     else:
@@ -75,6 +83,46 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
             blk_data3 = amr.update_external_boundary(level, blk_data, blk_data3[..., num:-num, num:-num], ref_blk_info)
             
             return blk_data3
+        if is_parallel:
+            def advance_flux(level, blk_data, dx, dy, dt, ref_blk_data, ref_blk_info, theta=None):
+
+                num = 3
+    
+                ghost_blk_data = amr.get_ghost_block_data(ref_blk_data, ref_blk_info)
+                U, aux = ghost_blk_data[:,0:-2],ghost_blk_data[:,-2:]
+                
+                #parallel splitting
+                split_U = grid_partion.split_and_distribute_block(U)
+                split_aux = grid_partion.split_and_distribute_block(aux)
+                split_U1 = split_U + dt * rhs(split_U, split_aux, dx, dy, theta)
+                split_blk_data1 = jnp.concatenate([split_U1,split_aux],axis=2)
+                blk_data1 = grid_partion.gather_block(split_blk_data1)
+                #end parallel
+                blk_data1 = amr.update_external_boundary(level, blk_data, blk_data1[..., num:-num, num:-num], ref_blk_info)
+    
+                ghost_blk_data1 = amr.get_ghost_block_data(blk_data1, ref_blk_info)
+                U1 = ghost_blk_data1[:,0:-2]
+
+                #parallel splitting
+                split_U1 = grid_partion.split_and_distribute_block(U1)
+                split_U2 = 3/4*split_U + 1/4*(split_U1 + dt * rhs(split_U1, split_aux, dx, dy, theta))
+                split_blk_data2 = jnp.concatenate([split_U2,split_aux],axis=2)
+                blk_data2 = grid_partion.gather_block(split_blk_data2)
+                #end parallel
+                blk_data2 = amr.update_external_boundary(level, blk_data, blk_data2[..., num:-num, num:-num], ref_blk_info)
+    
+                ghost_blk_data2 = amr.get_ghost_block_data(blk_data2, ref_blk_info)
+                U2 = ghost_blk_data2[:,0:-2]
+
+                #parallel settings
+                split_U2 = grid_partion.split_and_distribute_block(U2)
+                split_U3 = 1/3*split_U + 2/3*(split_U2 + dt * rhs(split_U2, split_aux, dx, dy, theta))
+                split_blk_data3 = jnp.concatenate([split_U3,split_aux],axis=2)
+                blk_data3 = grid_partion.gather_block(split_blk_data3)
+                #end parallel
+                blk_data3 = amr.update_external_boundary(level, blk_data, blk_data3[..., num:-num, num:-num], ref_blk_info)
+                
+                return blk_data3
     
     else:
         def advance_flux(field,dx,dy,dt,theta=None):
@@ -137,26 +185,10 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
         if parallel_set is not None:
             assert 'theta_pmap_axis' in parallel_set, "You should define the pmap axes of theta in your setting dict with key 'theta_pmap_axis'."
             theta_pmap_axis = parallel_set['theta_pmap_axis']
-            if solver_mode == 'amr':
-                advance_one_step_pmap = pmap(advance_one_step,axis_name='x',in_axes=(None,None,None,None,None,0,blk_info_pmap_axis,theta_pmap_axis),static_broadcasted_argnums=0)
-                def advance_one_step(level, blk_data, dx, dy, dt, ref_blk_data, ref_blk_info,theta=None):
-                    split_ref_blk_data = grid_partion.split_and_distribute_block(ref_blk_data)
-                    split_ref_blk_info = grid_partion.split_and_distribute_blk_info(ref_blk_info)
-                    splitted_blk_data = advance_one_step_pmap(level, blk_data, dx, dy, dt, split_ref_blk_data, split_ref_blk_info,theta)
-                    blk_data = grid_partion.gather_block(splitted_blk_data)
-                    return blk_data
-            else:
+            if solver_mode == 'base':
                 advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(0,None,None,None,theta_pmap_axis))
         else:
-            if solver_mode == 'amr':
-                advance_one_step_pmap = pmap(advance_one_step,axis_name='x',in_axes=(None,None,None,None,None,0,blk_info_pmap_axis),static_broadcasted_argnums=0)
-                def advance_one_step(level, blk_data, dx, dy, dt, ref_blk_data, ref_blk_info,theta=None):
-                    split_ref_blk_data = grid_partion.split_and_distribute_block(ref_blk_data)
-                    split_ref_blk_info = grid_partion.split_and_distribute_blk_info(ref_blk_info)
-                    splitted_blk_data = advance_one_step_pmap(level, blk_data, dx, dy, dt, split_ref_blk_data, split_ref_blk_info)
-                    blk_data = grid_partion.gather_block(splitted_blk_data)
-                    return blk_data
-            else:
+            if solver_mode == 'base':
                 advance_one_step = pmap(advance_one_step,axis_name='x',in_axes=(0,None,None,None))
         
     print('solver is initialized successfully!')
