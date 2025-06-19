@@ -31,11 +31,10 @@ def get_ghost_block_data(blk_data, blk_info):
     num = 3
 
     neighbor = blk_info['local_neighbor_index']
-    device = blk_info['device_index']
-    my_device = jax.lax.axis_index('x')
+    device_sent_list = blk_info['device_index']
     num_local_blocks = neighbor.shape(0)
     
-    perm = [(my_device, device[i]) for i in range(num_local_blocks)]
+    perm = device_sent_list[(my_device, device[i]) for i in range(num_local_blocks)]
     
 
     
