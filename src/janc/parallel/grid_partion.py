@@ -40,7 +40,7 @@ def split_and_distribute_blk_info(blk_info):
     num_blks_per_device = num_blks // num_devices
 
     local_neighbor_index = [(neighbor_index % num_blks_per_device) for i in range(num_devices)]
-    neighbor_device_index = [(neighbor_index // num_blks_per_device) for i in range(num_devices)]
+    neighbor_device_index = [(neighbor_index // num_blks_per_device, i) for i in range(num_devices)]
 
     sharded_number = jax.device_put_sharded(number, devices)
     sharded_index = jax.device_put_sharded(index, devices)
