@@ -34,29 +34,40 @@ def split_and_distribute_blk_info(blk_info):
     number = [number for i in range(num_devices)]
     index = [index for i in range(num_devices)]
     glob_index = [glob_index for i in range(num_devices)]
-    neighbor_index = [neighbor_index for i in range(num_devices)]
+
+    #add device id to neighbor_index
+    num_blks = neighbor_index.shape(0)
+    num_blks_per_device = num_blks // num_devices
+
+    local_neighbor_index = [(neighbor_index % num_blks_per_device) for i in range(num_devices)]
+    neighbor_device_index = [(neighbor_index // num_blks_per_device) for i in range(num_devices)]
 
     sharded_number = jax.device_put_sharded(number, devices)
     sharded_index = jax.device_put_sharded(index, devices)
     sharded_glob_index = jax.device_put_sharded(glob_index, devices)
-    sharded_neighbor_index = jax.device_put_sharded(neighbor_index, devices)
+    sharded_neighbor_index = jax.device_put_sharded(local_neighbor_index, devices)
+    sharded_neighbor_device_index = jax.device_put_sharded(neighbor_device_index, devices)
     
     sharded_blk_info = {'number': sharded_number,
                         'index': sharded_index,
                         'glob_index': sharded_glob_index,
-                        'neighbor_index': sharded_neighbor_index}
+                        'neighbor_index': sharded_neighbor_index,
+                        'neighbor_device_index':sharded_neighbor_device_index}
     return sharded_blk_info
     
 def gather_blk_info(sharded_blk_info):
     number = sharded_blk_info['number']
     index = sharded_blk_info['index']
     glob_index = sharded_blk_info['glob_index']
-    neighbor_index = sharded_blk_info['neighbor_index']
+    local_neighbor_index = sharded_blk_info['neighbor_index']
+    neighbor_device_index = sharded_blk_info['neighbor_device_index']
 
+    local_num_blks = local_neighbor_index.shape(0)
+    
     number = jnp.concatenate(number,axis=0)
     index = jnp.concatenate(index,axis=0)
     glob_index = jnp.concatenate(glob_index,axis=0)
-    neighbor_index = jnp.concatenate(neighbor_index,axis=0)
+    neighbor_index = jnp.concatenate(neighbor_device_index*local_num_blks + local_neighbor_index,axis=0)
 
     blk_info = {'number': number,
                 'index': index,
