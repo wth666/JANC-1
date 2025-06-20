@@ -25,36 +25,4 @@ def pad(U,aux):
     return U_periodic_pad,aux_periodic_pad
 
 
-@jit
-def get_ghost_block_data(blk_data, blk_info):
 
-    num = 3
-
-    neighbor = blk_info['local_neighbor_index']
-    send_device = blk_info['device_index']
-    my_device = jax.lax.axis_index('devices')
-    num_local_blocks = neighbor.shape(0)
-
-    #neighbor 0:
-    for i in range(num_local_blocks):
-        send_right = blk_data[neighbor[i,0], :, -num:, :]
-        reciev_left = jax.lax.ppermute(send_right,'x',[(send_device[i,0],my_device)])
-        #new_blk_data_i = jnp.concatenate([reviev_left,blk_data[neighbor[i,1]],axis=1])
-    
-    perm = device_sent_list[(my_device, device[i]) for i in range(num_local_blocks)]
-    
-
-    
-    upper = blk_data[neighbor[:,0], :, -num:, :]
-    lower = blk_data[neighbor[:,1], :, :num, :]
-    left = blk_data[neighbor[:,2], :, :, -num:]
-    right = blk_data[neighbor[:,3], :, :, :num]
-
-    padded_horizontal = jnp.concatenate([left, blk_data, right], axis=3)
-
-    pad_upper = jnp.pad(upper, ((0,0), (0,0), (0,0), (num,num)), mode='constant', constant_values=jnp.nan) 
-    pad_lower = jnp.pad(lower, ((0,0), (0,0), (0,0), (num,num)), mode='constant', constant_values=jnp.nan)
-
-    ghost_blk_data = jnp.concatenate([pad_upper, padded_horizontal, pad_lower], axis=2)
-
-    return ghost_blk_data
