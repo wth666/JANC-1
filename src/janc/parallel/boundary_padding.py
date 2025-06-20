@@ -39,7 +39,7 @@ def get_ghost_block_data(blk_data, blk_info):
     for i in range(num_local_blocks):
         send_right = blk_data[neighbor[i,0], :, -num:, :]
         reciev_left = jax.lax.ppermute(send_right,'x',[(send_device[i,0],my_device)])
-        new_blk_data_i = jnp.concatenate([reviev_left,blk_data[neighbor[i,1]],axis=1])
+        #new_blk_data_i = jnp.concatenate([reviev_left,blk_data[neighbor[i,1]],axis=1])
     
     perm = device_sent_list[(my_device, device[i]) for i in range(num_local_blocks)]
     
