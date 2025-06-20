@@ -37,10 +37,27 @@ def split_and_distribute_blk_info(blk_info):
 
     #add device id to neighbor_index
     num_blks = neighbor_index.shape(0)
-    num_blks_per_device = num_blks // num_devices
+    num_local_blks = num_blks // num_devices
 
-    local_neighbor_index = [(neighbor_index % num_blks_per_device) for i in range(num_devices)]
-    neighbor_device_index = [(neighbor_index // num_blks_per_device, i) for i in range(num_devices)]
+    temp_local_neighbor_index = [(neighbor_index % num_local_blks) for i in range(num_devices)]
+    local_neighbor_index = temp_local_neighbor_index.copy()
+    for i in range(num_devices):
+        for j in range(num_local_blks):
+            device = (neighbor_index[j,0] // num_local_blks)
+            up_device = (neighbor_index[j,0] // num_local_blks,i)
+            exchange_neighbor = temp_local_neighbor_index[i][j,0]
+            local_neighbor_index[device][j,0]
+            up_device = [(neighbor_index[j,0] // num_local_blks,j) for j in range(num_local_blks)]
+            exchange_mask = (neighbor_index[:,0]//num_local_blks) != i
+            exchange_device = exchange_mask * (neighbor_index[:,0]//num_local_blks)
+            exchange_neighbor = local_neighbor_index[i][exchange_mask]
+            local_neighbor_index = local_neighbor_index.at[exchange_device].set
+            
+            
+            trade_device = ((neighbor_index[:,0]//num_local_blks) != i)*(neighbor_index[:,0]//num_local_blks)
+            trade_vals = local_neighbor_index[i][trade_indices,0]
+            neighbor_device_index = [(neighbor_index // num_blks_per_device, i) for i in range(num_devices)]
+    
 
     sharded_number = jax.device_put_sharded(number, devices)
     sharded_index = jax.device_put_sharded(index, devices)
