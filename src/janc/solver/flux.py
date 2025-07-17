@@ -10,40 +10,55 @@ C2 = 3 / 5
 C3 = 3 / 10
 
 @jit
-def flux(U, aux, ixy):
-    rho,u,v,Y,p,a = aux_func.U_to_prim(U,aux)
-    rhoE = U[3:4,:,:]
-    zx = (ixy == 1) * 1
-    zy = (ixy == 2) * 1
-    F = zx*jnp.concatenate([rho * u, rho * u ** 2 + p, rho * u * v, u * (rhoE + p), rho * u * Y], axis=0) + zy*jnp.concatenate([rho * v, rho * u * v, rho * v ** 2 + p, v * (rhoE + p), rho * v * Y], axis=0)
-    return F
+def flux(rho,u,v,p,Y,h):
+    rhoE = rho*h-p+0.5*rho*(u**2+v**2)
+    U = jnp.concatenate([rho,rho*u,rho*v,rhoE,rho*Y],axis=0)
+    F = jnp.concatenate([rho * u, rho * u ** 2 + p, rho * u * v, u * (rhoE + p), rho * u * Y], axis=0) 
+    G = jnp.concatenate([rho * v, rho * u * v, rho * v ** 2 + p, v * (rhoE + p), rho * v * Y], axis=0)
+    return U,F,G
     
 @jit
-def KNP_flux(Ul, Ur, aux_l, aux_r, ixy):
-    rhoL, uL, vL, YL, pL, aL = aux_func.U_to_prim(Ul, aux_l)
-    rhoR, uR, vR, YR, pR, aR = aux_func.U_to_prim(Ur, aux_r)
+def KNP_flux(rhoL, uL, vL, pL, YL, aL, hL, rhoR, uR, vR, pR, YR, aR, hR):
 
-    u_nL = jnp.where(ixy == 1, uL, vL)
-    u_nR = jnp.where(ixy == 1, uR, vR)
-
+    u_nL = uL
+    u_nR = uR
+    
     lambda_L_min = u_nL - aL
     lambda_L_max = u_nL + aL
     lambda_R_min = u_nR - aR
     lambda_R_max = u_nR + aR
 
-    a_minus = jnp.minimum(0.0, jnp.minimum(lambda_L_min, lambda_R_min))
-    a_plus  = jnp.maximum(0.0, jnp.maximum(lambda_L_max, lambda_R_max))
+    a_minus_F = jnp.minimum(0.0, jnp.minimum(lambda_L_min, lambda_R_min))
+    a_plus_F  = jnp.maximum(0.0, jnp.maximum(lambda_L_max, lambda_R_max))
 
-    FL = flux(Ul, aux_l, ixy)
-    FR = flux(Ur, aux_r, ixy)
+    denom_F = a_plus_F - a_minus_F + 1e-10
+
+    u_nL = vL
+    u_nR = vR
     
-    denom = a_plus - a_minus + 1e-10
+    lambda_L_min = u_nL - aL
+    lambda_L_max = u_nL + aL
+    lambda_R_min = u_nR - aR
+    lambda_R_max = u_nR + aR
 
+    a_minus_G = jnp.minimum(0.0, jnp.minimum(lambda_L_min, lambda_R_min))
+    a_plus_G = jnp.maximum(0.0, jnp.maximum(lambda_L_max, lambda_R_max))
+
+    denom_G = a_plus_G - a_minus_G + 1e-10
+    
+    UL,FL, GL = flux(rhoL, uL, vL, pL, YL, hL)
+    UR,FR, GR = flux(rhoR, uR, vR, pR, YR, hR)
+    
     F_KNP = (
-        (a_plus * FL - a_minus * FR) / denom +
-        (a_plus * a_minus) / denom * (Ur - Ul)
+        (a_plus_F * FL - a_minus_F * FR) / denom_F +
+        (a_plus_F * a_minus_F) / denom_F * (UR - UL)
     )
-    return F_KNP
+
+    G_KNP = (
+        (a_plus_G * GL - a_minus_G * GR) / denom_G +
+        (a_plus_G * a_minus_G) / denom_G * (UR - UL)
+    )
+    return F_KNP,G_KNP
 
 
 @jit
@@ -208,63 +223,28 @@ def weno5(U,aux,dx,dy):
 
 @jit
 def weno5_KNP(U, aux, dx, dy):
-
     rho,u,v,Y,p,a = aux_func.U_to_prim(U,aux)
-    e = U[3:4]/U[0:1] - 0.5*(u**2+v**2)
     Y = U[4:]/U[0:1]
-    var_p = jnp.concatenate([rho, u, v, p, e, Y], axis=0)
+    var_p = jnp.concatenate([rho, u, v, p, Y], axis=0)
 
     var_p_l = WENO_plus_x(var_p)
     var_p_r = WENO_minus_x(var_p)
 
-    rho_l = var_p_l[0:1]
-    u_l = var_p_l[1:2]
-    v_l = var_p_l[2:3]
-    p_l = var_p_l[3:4]
-    e_l = var_p_l[4:5]
-    Y_l = var_p_l[5:]
+    rho_l,u_l,v_l,p_l,Y_l = var_p_l[0:1],var_p_l[1:2],var_p_l[2:3],var_p_l[3:4],var_p_l[4:]
     R_l = thermo.get_R(Y_l)
     T_l = p_l/(rho_l*R_l)
-    aux_l = thermo.get_T(e_l,Y_l,T_l)
-    rho_r = var_p_r[0:1]
-    u_r = var_p_r[1:2]
-    v_r = var_p_r[2:3]
-    p_r = var_p_r[3:4]
-    e_r = var_p_r[4:5]
-    Y_r = var_p_r[5:]
+    _, gamma_l, h_l, _, _ = thermo.get_thermo(T_l,Y_l)
+    a_l = jnp.sqrt(gamma_l*R_l*T_l)
+    
+    rho_r,u_r,v_r,p_r,Y_r = var_p_r[0:1],var_p_r[1:2],var_p_r[2:3],var_p_r[3:4],var_p_r[4:]
     R_r = thermo.get_R(Y_r)
-    T_r = p_r/(rho_r*R_r)
-    aux_r = thermo.get_T(e_r,Y_r,T_r)
-    Ul = jnp.concatenate([rho_l, rho_l*u_l, rho_l*v_l, rho_l*(e_l+0.5*(u_l**2+v_l**2)), rho_l*Y_l],axis=0)
-    Ur = jnp.concatenate([rho_r, rho_r*u_r, rho_r*v_r, rho_r*(e_r+0.5*(u_r**2+v_r**2)), rho_r*Y_r],axis=0)
-    flux_knp = KNP_flux(Ul, Ur, aux_l, aux_r, ixy=1)
-    dF = (flux_knp[:, 1:, :] - flux_knp[:, :-1, :])
-
-    var_p_l = WENO_plus_y(var_p)
-    var_p_r = WENO_minus_y(var_p)
-
-    rho_l = var_p_l[0:1]
-    u_l = var_p_l[1:2]
-    v_l = var_p_l[2:3]
-    p_l = var_p_l[3:4]
-    e_l = var_p_l[4:5]
-    Y_l = var_p_l[5:]
-    R_l = thermo.get_R(Y_l)
-    T_l = p_l/(rho_l*R_l)
-    aux_l = thermo.get_T(e_l,Y_l,T_l)
-    rho_r = var_p_r[0:1]
-    u_r = var_p_r[1:2]
-    v_r = var_p_r[2:3]
-    p_r = var_p_r[3:4]
-    e_r = var_p_r[4:5]
-    Y_r = var_p_r[5:]
-    R_r = thermo.get_R(Y_r)
-    T_r = p_r/(rho_r*R_r)
-    aux_r = thermo.get_T(e_r,Y_r,T_r)
-    Ul = jnp.concatenate([rho_l, rho_l*u_l, rho_l*v_l, rho_l*(e_l+0.5*(u_l**2+v_l**2)), rho_l*Y_l],axis=0)
-    Ur = jnp.concatenate([rho_r, rho_r*u_r, rho_r*v_r, rho_r*(e_r+0.5*(u_r**2+v_r**2)), rho_r*Y_r],axis=0)
-    flux_knp = KNP_flux(Ul, Ur, aux_l, aux_r, ixy=2)
-    dG = (flux_knp[:, :, 1:] - flux_knp[:, :, :-1])
+    T_r = p_r/(rho_r*R_r) 
+    _, gamma_r, h_r, _, _ = thermo.get_thermo(T_r,Y_r)
+    a_r = jnp.sqrt(gamma_r*R_r*T_r)
+    
+    F_knp,G_knp = KNP_flux(rho_l, u_l, v_l, p_l, Y_l, a_l, h_l, rho_r, u_r, v_r, p_r, Y_r, a_r, h_r)
+    dF = (F_knp[:, 1:, :] - F_knp[:, :-1, :])
+    dG = (G_knp[:, :, 1:] - G_knp[:, :, :-1])    
     
     netflux = dF/dx + dG/dy
 
