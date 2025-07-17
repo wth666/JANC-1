@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from jax import jit,vmap,pmap
 from ..solver import aux_func
-from .flux import weno5
+from .flux import weno5,weno5_KNP
 from ..thermodynamics import thermo
 from ..thermodynamics import chemical
 from ..boundary import boundary
@@ -20,7 +20,7 @@ def CFL(field,dx,dy,cfl=0.20):
     dt = jnp.minimum(cfl*dx/cx,cfl*dy/cy)
     return dt
 
-def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, solver_mode='base',is_parallel=False,parallel_set=None):
+def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, solver_mode='base',is_parallel=False,parallel_set=None,experimental=False):
     thermo.set_thermo(thermo_set,nondim_set)
     boundary.set_boundary(boundary_set)
     aux_func.set_source_terms(source_set)
@@ -33,6 +33,9 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
         boundary_conditions = parallel_boundary.boundary_conditions
     else:
         boundary_conditions = boundary.boundary_conditions
+
+    if experimental:
+        weno5 = weno5_KNP
     
     if solver_mode == 'amr':
         
