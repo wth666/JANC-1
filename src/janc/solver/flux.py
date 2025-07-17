@@ -88,8 +88,8 @@ def WENO_plus_x(f):
     fj_halfp3 = 1 / 3 * fj + 5 / 6 * fjp1 - 1 / 6 * fjp2
 
     fj_halfp = w1 * fj_halfp1 + w2 * fj_halfp2 + w3 * fj_halfp3
-    dfj = fj_halfp[:,1:,:] - fj_halfp[:,0:-1,:]
-    return dfj
+    #dfj = fj_halfp[:,1:,:] - fj_halfp[:,0:-1,:]
+    return fj_halfp
 
 @jit
 def WENO_plus_y(f):
@@ -118,9 +118,9 @@ def WENO_plus_y(f):
     fj_halfp3 = 1 / 3 * fj + 5 / 6 * fjp1 - 1 / 6 * fjp2
 
     fj_halfp = w1 * fj_halfp1 + w2 * fj_halfp2 + w3 * fj_halfp3
-    dfj = fj_halfp[:,:,1:] - fj_halfp[:,:,0:-1]
+    #dfj = fj_halfp[:,:,1:] - fj_halfp[:,:,0:-1]
 
-    return dfj
+    return fj_halfp
 
 @jit
 def WENO_minus_x(f):
@@ -149,9 +149,9 @@ def WENO_minus_x(f):
     fj_halfm3 = 1 / 3 * fj + 5 / 6 * fjm1 - 1 / 6 * fjm2
 
     fj_halfm = w1 * fj_halfm1 + w2 * fj_halfm2 + w3 * fj_halfm3
-    dfj = (fj_halfm[:,1:,:] - fj_halfm[:,0:-1,:])
+    #dfj = (fj_halfm[:,1:,:] - fj_halfm[:,0:-1,:])
 
-    return dfj
+    return fj_halfm
 
 @jit
 def WENO_minus_y(f):
@@ -180,9 +180,9 @@ def WENO_minus_y(f):
     fj_halfm3 = 1 / 3 * fj + 5 / 6 * fjm1 - 1 / 6 * fjm2
 
     fj_halfm = w1 * fj_halfm1 + w2 * fj_halfm2 + w3 * fj_halfm3
-    dfj = (fj_halfm[:,:,1:] - fj_halfm[:,:,0:-1])
+    #dfj = (fj_halfm[:,:,1:] - fj_halfm[:,:,0:-1])
 
-    return dfj
+    return fj_halfm
 
 @jit
 def weno5(U,aux,dx,dy):
@@ -190,10 +190,14 @@ def weno5(U,aux,dx,dy):
     Gplus, Gminus = splitFlux_LF(2, U, aux)
 
     dFp = WENO_plus_x(Fplus)
+    dFp = (dFp[:,1:,:] - dFp[:,0:-1,:])
     dFm = WENO_minus_x(Fminus)
+    dFm = (dFm[:,1:,:] - dFm[:,0:-1,:])
 
     dGp = WENO_plus_y(Gplus)
+    dGp = (dGp[:,:,1:] - dGp[:,:,0:-1])
     dGm = WENO_minus_y(Gminus)
+    dGm = (dGm[:,:,1:] - dGm[:,:,0:-1])
 
     dF = dFp + dFm
     dG = dGp + dGm
