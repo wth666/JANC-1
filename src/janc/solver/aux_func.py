@@ -48,7 +48,7 @@ def U_to_prim(U,aux):
     u = state[1:2,:,:]/rho
     v = state[2:3,:,:]/rho
     Y = state[4:,:,:]/rho
-    R = thermo.get_R(Y).astype(jnp.float32)
+    R = thermo.get_R(Y)#.astype(jnp.float32)
     p = (rho*R*T)
     a = jnp.sqrt(gamma*p/rho)
     return rho,u,v,Y,p,a
