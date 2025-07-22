@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from jax import jit,vmap,pmap
 from ..solver import aux_func
-from .flux import weno5,weno5_KNP
+from .flux import weno5
 from ..thermodynamics import thermo
 from ..thermodynamics import chemical
 from ..boundary import boundary
@@ -34,8 +34,8 @@ def set_solver(thermo_set, boundary_set, source_set = None, nondim_set = None, s
     else:
         boundary_conditions = boundary.boundary_conditions
 
-    if experimental:
-        weno5 = weno5_KNP
+    #if experimental:
+        #weno5 = weno5_KNP
     
     if solver_mode == 'amr':
         
