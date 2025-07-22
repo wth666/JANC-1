@@ -169,7 +169,3 @@ def weno5(U,aux,dx,dy):
     netflux = dF/dx + dG/dy
 
     return -netflux  
-    
-    netflux = dF/dx + dG/dy
-
-    return -netflux
