@@ -10,7 +10,7 @@ def set_source_terms(user_set):
         return jnp.zeros_like(U)
     
     if not thermo.thermo_settings['is_detailed_chemistry']:
-        assert (('self_defined_source_terms' in user_set) and (user_set['self_defined_source_terms'] is not None)), "The chemical source terms must be provided by users."
+        assert 'self_defined_source_terms' in user_set, "The chemical source terms must be provided by users."
     
     if user_set is None:
         user_source = zero_source_terms
