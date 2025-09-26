@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 from .boundary_padding import pad, replace_lb, replace_rb, replace_ub, replace_bb
 from . import slip_wall
-from . import neumann
+from . import zero_gradient
 from . import pressure_outlet
 
 
@@ -25,7 +25,7 @@ def set_boundary(boundary_config:dict):
     else:
         assert (boundary_config['left_boundary'] == 'slip_wall') or\
                (boundary_config['left_boundary'] == 'periodic') or\
-                   (boundary_config['left_boundary'] == 'neumann') or\
+                   (boundary_config['left_boundary'] == 'zero_gradient') or\
                (boundary_config['left_boundary'] == 'pressure_outlet'),\
                 'the bc type is not supported, please try custom  bc.'
                 
@@ -38,10 +38,10 @@ def set_boundary(boundary_config:dict):
         elif boundary_config['left_boundary'] == 'periodic':
             def left_boundary(padded_U,theta=None):
                 return padded_U
-        elif boundary_config['left_boundary'] == 'neumann':
+        elif boundary_config['left_boundary'] == 'zero_gradient':
             def left_boundary(padded_U,theta=None):
                 U_lb = padded_U[:,3:6,3:-3]
-                U_lb = neumann.left(U_lb)
+                U_lb = zero_gradient.left(U_lb)
                 U_with_lb = replace_lb(U_lb,padded_U)
                 return U_with_lb
         elif boundary_config['left_boundary'] == 'pressure_outlet':
@@ -63,7 +63,7 @@ def set_boundary(boundary_config:dict):
     else:
         assert (boundary_config['right_boundary'] == 'slip_wall') or\
                (boundary_config['right_boundary'] == 'periodic') or\
-                   (boundary_config['right_boundary'] == 'neumann') or\
+                   (boundary_config['right_boundary'] == 'zero_gradient') or\
                (boundary_config['right_boundary'] == 'pressure_outlet'),\
                 'the bc type is not supported, please try custom  bc.'
                 
@@ -76,10 +76,10 @@ def set_boundary(boundary_config:dict):
         elif boundary_config['right_boundary'] == 'periodic':
             def right_boundary(padded_U,theta=None):
                 return padded_U
-        elif boundary_config['right_boundary'] == 'neumann':
+        elif boundary_config['right_boundary'] == 'zero_gradient':
             def right_boundary(padded_U,theta=None):
                 U_rb = padded_U[:,-6:-3,3:-3]
-                U_rb = neumann.right(U_rb)
+                U_rb = zero_gradient.right(U_rb)
                 U_with_rb = replace_rb(U_rb,padded_U)
                 return U_with_rb
         elif boundary_config['right_boundary'] == 'pressure_outlet':
@@ -102,7 +102,7 @@ def set_boundary(boundary_config:dict):
     else:
         assert (boundary_config['bottom_boundary'] == 'slip_wall') or\
                (boundary_config['bottom_boundary'] == 'periodic') or\
-                   (boundary_config['bottom_boundary'] == 'neumann') or\
+                   (boundary_config['bottom_boundary'] == 'zero_gradient') or\
                (boundary_config['bottom_boundary'] == 'pressure_outlet'),\
                 'the bc type is not supported, please try custom  bc.'
                 
@@ -115,10 +115,10 @@ def set_boundary(boundary_config:dict):
         elif boundary_config['bottom_boundary'] == 'periodic':
             def bottom_boundary(padded_U,theta=None):
                 return padded_U
-        elif boundary_config['bottom_boundary'] == 'neumann':
+        elif boundary_config['bottom_boundary'] == 'zero_gradient':
             def bottom_boundary(padded_U,theta=None):
                 U_bb = padded_U[:,3:-3,3:6]
-                U_bb = neumann.bottom(U_bb)
+                U_bb = zero_gradient.bottom(U_bb)
                 U_with_bb = replace_bb(U_bb,padded_U)
                 return U_with_bb
         elif boundary_config['bottom_boundary'] == 'pressure_outlet':
@@ -141,7 +141,7 @@ def set_boundary(boundary_config:dict):
     else:
         assert (boundary_config['up_boundary'] == 'slip_wall') or\
                (boundary_config['up_boundary'] == 'periodic') or\
-                   (boundary_config['up_boundary'] == 'neumann') or\
+                   (boundary_config['up_boundary'] == 'zero_gradient') or\
                (boundary_config['up_boundary'] == 'pressure_outlet'),\
                 'the bc type is not supported, please try custom  bc.'
                 
@@ -154,10 +154,10 @@ def set_boundary(boundary_config:dict):
         elif boundary_config['up_boundary'] == 'periodic':
             def up_boundary(padded_U,theta=None):
                 return padded_U
-        elif boundary_config['up_boundary'] == 'neumann':
+        elif boundary_config['up_boundary'] == 'zero_gradient':
             def up_boundary(padded_U,theta=None):
                 U_ub = padded_U[:,3:-3,-6:-3]
-                U_ub = neumann.up(U_ub)
+                U_ub = zero_gradient.up(U_ub)
                 U_with_ub = replace_ub(U_ub,padded_U)
                 return U_with_ub
         elif boundary_config['up_boundary'] == 'pressure_outlet':
@@ -177,5 +177,6 @@ def boundary_conditions(U, theta=None):
     U_with_bb = boundary_func['bottom_boundary'](U_with_rb,theta)
     U_with_ghost_cell = boundary_func['up_boundary'](U_with_bb,theta)
     return U_with_ghost_cell
+
 
 
