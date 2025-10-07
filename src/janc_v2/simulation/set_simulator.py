@@ -143,8 +143,8 @@ class H5Saver:
             self.get_prim = get_prim
         if data_dim == '2D':
             def get_prim(U,aux):
-                aux = aux_func_2D.update_aux(U,aux)
-                rho,u,v,Y,p,a = aux_func_2D.U_to_prim(U,aux)
+                aux = aux_func.update_aux(U,aux)
+                rho,u,v,Y,p,a = aux_func.U_to_prim(U,aux)
                 q = {'density':rho[0],
                      'x-velocity':u[0],
                      'y-velocity':v[0],
@@ -530,6 +530,7 @@ def AMR_Simulator(simulation_config):
         blk_data = jnp.array([jnp.concatenate([U,aux],axis=0)])
         return blk_data
     return jit(advance_func_amr,static_argnames='level'),jit(advance_func_base)
+
 
 
 
