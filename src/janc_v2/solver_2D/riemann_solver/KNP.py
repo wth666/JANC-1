@@ -1,3 +1,7 @@
+import jax.numpy as jnp
+from ...model import thermo_model as thermo
+
+
 def riemann_flux(q_L_x, q_R_x, q_L_y, q_R_y):
     # 提取左右状态的基本物理量（x方向）
     rho_L_x, rho_R_x = q_L_x[0:1], q_R_x[0:1]
