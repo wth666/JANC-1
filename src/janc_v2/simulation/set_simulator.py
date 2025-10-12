@@ -118,9 +118,8 @@ def set_advance_func(dim,flux_config,reaction_config,time_control,is_amr,flux_fu
                 U, aux = advance_flux(U,aux,dx,dy,dt,theta)
                 #dU = reaction_model.reaction_source_terms(U,aux,dt,theta)
                 #U = U + dU
-                non_chem = theta['nonChem']
-                dU = reaction_model.reaction_source_terms(U[:,:,non_chem:],aux[:,:,non_chem:],dt,theta)
-                U = jnp.concatenate([U[:,:,:non_chem],U[:,:,non_chem:]+dU],axis=2)
+                dU = reaction_model.reaction_source_terms(U[:,:,370:],aux[:,:,370:],dt,theta)
+                U = jnp.concatenate([U[:,:,:370],U[:,:,370:]+dU],axis=2)
                 aux = update_func(U, aux)
                 return U, aux
     else:
@@ -533,6 +532,7 @@ def AMR_Simulator(simulation_config):
         blk_data = jnp.array([jnp.concatenate([U,aux],axis=0)])
         return blk_data
     return jit(advance_func_amr,static_argnames='level'),jit(advance_func_base)
+
 
 
 
